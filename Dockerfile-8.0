@@ -1,0 +1,36 @@
+FROM ubuntu:22.04
+
+RUN apt update
+RUN apt -y upgrade
+RUN apt -y install python3-numpy python3-pip python3-future python-is-python3 wget
+RUN apt -y install build-essential cmake cmake-curses-gui git protobuf-compiler libprotobuf-dev
+
+#Add dotnet repo
+RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb 
+RUN dpkg -i packages-microsoft-prod.deb
+RUN apt -y install dotnet-sdk-8.0 aspnetcore-runtime-8.0
+
+# Install the lsb-release package to help identify platform.
+RUN apt -y install lsb-release 
+
+RUN mkdir /tmp/build_output
+
+# Set the Environment Variable for the DOTNET CLI HOME PATH
+ARG dotnet_cli_home_arg=/tmp/
+ENV DOTNET_CLI_HOME=$dotnet_cli_home_arg
+
+# Install emsdk
+RUN git clone https://github.com/emscripten-core/emsdk.git
+RUN emsdk/emsdk install latest
+# Added permission for none-root user to use emsdk
+RUN chmod -R ug+rw emsdk
+RUN chmod -R a+rw emsdk/upstream/emscripten/cache
+
+# Install packages for building Emgu CV
+RUN DEBIAN_FRONTEND="noninterative" apt -y install build-essential libgtk-3-dev libgstreamer1.0-dev libavcodec-dev libswscale-dev libavformat-dev libdc1394-dev libv4l-dev cmake-curses-gui ocl-icd-dev freeglut3-dev libgeotiff-dev libusb-1.0-0-dev libvtk9-dev libfreetype-dev libharfbuzz-dev qtbase5-dev libeigen3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgflags-dev libgoogle-glog-dev libatlas-base-dev liblapacke-dev libva-dev 
+
+# Install doxygen for compiling documentation
+RUN DEBIAN_FRONTEND="noninterative" apt -y install doxygen texlive-latex-base texlive-latex-extra texlive-font-utils
+
+# Install packages needed to convert image format for release package
+RUN DEBIAN_FRONTEND="noninterative" apt -y install imagemagick-6.q16
